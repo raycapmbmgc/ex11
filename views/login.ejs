@@ -5,31 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login2</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f0f8ff; 
-            padding-top: 50px;
-        }
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .form-container {
-            background-color: #fff; 
-            border-radius: 10px; 
-            padding: 20px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
-        }
-    </style>
 </head>
-<body>
+<body class="bg-light"> 
     <div class="container">
         <div class="form-container">
             <h2 class="text-center">Login</h2>
             <% if(errorMessage) { %>
                 <p class="text-danger"><%= errorMessage %></p>
             <% } %>
-            <form action="/login" method="POST">
+            <form action="/login" method="POST" class="custom-form">
                 <div class="form-group">
                     <label for="email">Email:</label>
                     <input type="email" class="form-control" id="email" name="email" required>
