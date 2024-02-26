@@ -9,44 +9,44 @@ app.use(bodyParser.urlencoded({ extended: true }));
 let users = [];
 
 
-app.get('/profile/:email', (req, res) => {
+app.get('/perfil/:email', (req, res) => {
     const { email } = req.params;
-    res.render('profile', { email, users }); 
+    res.render('perfil', { email, users }); 
 });
 
 
-app.get('/users', (req, res) => {
-    res.render('users', { users });
+app.get('/usuarios', (req, res) => {
+    res.render('usuarios', { users });
 });
 
 
-app.post('/delete/:email', (req, res) => {
+app.post('/excluir/:email', (req, res) => {
     const { email } = req.params;
     const index = users.findIndex(user => user.email === email);
     if (index !== -1) {
         users.splice(index, 1);
-        console.log('User deleted:', email);
+        console.log('Usuário excluído:', email);
     }
-    res.redirect('/users');
+    res.redirect('/usuarios');
 });
 
 
-app.get('/register', (req, res) => {
-    res.render('register', { errorMessage: '' });
+app.get('/registro', (req, res) => {
+    res.render('registro', { errorMessage: '' });
 });
 
 
-app.post('/register', (req, res) => {
+app.post('/registro', (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
     if (password !== confirmPassword) {
-        return res.render('register', { errorMessage: 'Password and confirm password do not match' });
+        return res.render('registro', { errorMessage: 'Senha e confirmação de senha não coincidem' });
     }
     const existingUser = users.find(user => user.email === email);
     if (existingUser) {
-        return res.render('register', { errorMessage: 'Email is already in use' });
+        return res.render('registro', { errorMessage: 'O email já está em uso' });
     }
     users.push({ name, email, password });
-    console.log('New user registered:', { name, email });
+    console.log('Novo usuário registrado:', { name, email });
     res.redirect('/');
 });
 
@@ -60,13 +60,14 @@ app.post('/login', (req, res) => {
     const { email, password } = req.body;
     const user = users.find(user => user.email === email && user.password === password);
     if (user) {
-        res.redirect(`/profile/${user.email}`);
+        res.redirect(`/perfil/${user.email}`);
     } else {
-        res.render('index', { errorMessage: 'Email or password is incorrect' });
+        res.render('index', { errorMessage: 'Email ou senha incorretos' });
     }
 });
 
 
 app.listen(3000, () => {
-    console.log(`Server is running on http://localhost:${3000}`);
+    console.log(`Servidor está rodando em http://localhost:${3000}`);
 });
+
