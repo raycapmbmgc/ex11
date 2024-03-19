@@ -37,15 +37,15 @@ app.get('/usuarios', verificarAutenticacao, (req, res) => {
 });
 
 app.post('/excluir/:email', verificarAutenticacao, (req, res) => {
-    // Lógica para excluir usuário
+   
 });
 
-app.get('/registro', (req, res) => {
-    res.render('registro', { errorMessage: '' });
+app.get('/register', (req, res) => {
+    res.render('register', { errorMessage: '' });
 });
 
-app.post('/registro', (req, res) => {
-    // Lógica para registro de novo usuário
+app.post('/register', (req, res) => {
+   
 });
 
 app.get('/', (req, res) => {
@@ -56,7 +56,6 @@ app.post('/login', (req, res) => {
     const { email, password } = req.body;
     const user = users.find(user => user.email === email && user.password === password);
     if (user) {
-        // Criar sessão para o usuário autenticado
         req.session.usuario = user;
         res.redirect(`/perfil/${user.email}`);
     } else {
@@ -75,6 +74,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-app.listen(3000, () => {
-    console.log(`Servidor está rodando em http://localhost:${3000}`);
+app.listen(8080, () => {
+    console.log(`Servidor está rodando em http://localhost:${8080}`);
 });
