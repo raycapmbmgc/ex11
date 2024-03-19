@@ -3,13 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Perfil do Usuário</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
+  <style>
+   body{
+    background: linear-gradient(to right, pink, blue);
+   }
+   .container{
+      margin-top: 100px;
+            border-radius: 10px;
+            border: 2px solid #ced4da;
+            padding: 20px;
+            background-color: #fff;
+   }
+  </style>
 <body>
     <div class="container">
-        <h2>BEM VINDO</h2>
-        <p>oiii professor :)</p>
+        <h1>Perfil de <%= email %></h1>
+        <h2>Lista de Usuários Cadastrados</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr>
+                        <td><%= user.id %></td>
+                        <td><%= user.email %></td>
+                        <td>
+                            <form action="/excluir/<%= user.email %>" method="POST"> <!-- Verifique se o action está correto -->
+                                <button type="submit" class="btn btn-danger">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
     </div>
 </body>
 </html>
