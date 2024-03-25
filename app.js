@@ -1,24 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const path = require('path'); 
+const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Configura a pasta de visualizações
 app.set('views', path.join(__dirname, 'views'));
-
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(cookieParser());
 app.use(session({
     secret: 'chave-secreta',
     resave: false,
     saveUninitialized: true
 }));
 
-let users = [];
-
+const db = require('./db');
 
 function verificarAutenticacao(req, res, next) {
     if (req.session.usuario) {
@@ -29,24 +27,43 @@ function verificarAutenticacao(req, res, next) {
 }
 
 app.get('/profile/:email', verificarAutenticacao, (req, res) => {
-    const email = req.params.email; 
-    const user = users.find(user => user.email === email);
-    if (user) {
-        res.render('profile', { email, users }); 
-    } else {
-        res.status(404).send('Usuário não encontrado');
-    }
+    const email = req.params.email;
+    const sql = 'SELECT * FROM users WHERE email = ?';
+    db.query(sql, [email], (err, result) => {
+        if (err) {
+            console.error('Erro ao buscar usuário:', err);
+            return res.status(500).send('Erro ao buscar usuário');
+        }
+        const user = result[0];
+        if (user) {
+            res.render('profile', { email: user.email, users: result });
+        } else {
+            res.status(404).send('Usuário não encontrado');
+        }
+    });
 });
 
 app.get('/usuarios', verificarAutenticacao, (req, res) => {
-    res.render('usuarios', { users });
+    const sql = 'SELECT * FROM users';
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Erro ao buscar usuários:', err);
+            return res.status(500).send('Erro ao buscar usuários');
+        }
+        res.render('usuarios', { users: result });
+    });
 });
 
-app.post('/excluir/:email', verificarAutenticacao, (req, res) => {
-    const { email } = req.params;
-    const index = users.findIndex(user => user.email === email);
-    users.splice(index, 1);
-    res.redirect('/usuarios');
+app.post('/excluir', verificarAutenticacao, (req, res) => {
+    const { email } = req.body; 
+    const sql = 'DELETE FROM users WHERE email = ?';
+    db.query(sql, [email], (err, result) => {
+        if (err) {
+            console.error('Erro ao excluir usuário:', err);
+            return res.status(500).send('Erro ao excluir usuário');
+        }
+        res.redirect('/profile/' + req.session.usuario.email);
+    });
 });
 
 app.get('/register', (req, res) => {
@@ -55,59 +72,59 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
     const { email, password } = req.body;
-    // Verifica se o usuário já existe
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
-        return res.render('register', { errorMessage: 'Este email já está sendo utilizado' });
-    }
-
-    // Se o usuário não existir, adiciona-o à lista de usuários
-    const newUser = { id: users.length + 1, email, password };
-    users.push(newUser);
-    
-    // Redireciona para a página inicial após o registro
-    res.redirect('/');
-});
-app.post('/excluir/:email', verificarAutenticacao, (req, res) => {
-    const { email } = req.params;
-    // Encontra o índice do usuário com o email fornecido
-    const index = users.findIndex(user => user.email === email);
-    // Remove o usuário da lista de usuários, se encontrado
-    if (index !== -1) {
-        users.splice(index, 1);
-        res.redirect('/profile/' + req.session.usuario.email); 
-        res.status(404).send('Usuário não encontrado');
-    }
+    const sql = 'INSERT INTO users (email, password) VALUES (?, ?)';
+    db.query(sql, [email, password], (err, result) => {
+        if (err) {
+            console.error('Erro ao registrar usuário:', err);
+            return res.render('register', { errorMessage: 'Erro ao registrar usuário. Por favor, tente novamente.' });
+        }
+        console.log('Usuário registrado com sucesso');
+       
+        res.redirect('/login');
+    });
 });
 
-
-app.get('/', (req, res) => {
-    res.render('index', { errorMessage: '' });
+app.get('/login', (req, res) => {
+    res.render('login', { errorMessage: '' }); 
 });
 
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
-    const user = users.find(user => user.email === email && user.password === password);
-    if (user) {
-        req.session.usuario = user;
-        res.redirect(`/profile/${user.email}`);
-    } else {
-        res.render('index', { errorMessage: 'Email ou senha incorretos' });
-    }
+    const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
+    db.query(sql, [email, password], (err, result) => {
+        if (err) {
+            console.error('Erro ao autenticar usuário:', err);
+            return res.render('index', { errorMessage: 'Erro ao autenticar usuário' });
+        }
+        const user = result[0];
+        if (user) {
+            req.session.usuario = user;
+            // Corrigindo a configuração do cookie
+            res.cookie('isLoggedIn', 'true', { maxAge: 900000, httpOnly: false });
+            res.redirect(`/profile/${user.email}`);
+        } else {
+            res.render('index', { errorMessage: 'Email ou senha incorretos' });
+        }
+    });
 });
 
 app.get('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             console.error('Erro ao fazer logout:', err);
-            res.send('Erro ao fazer logout');
-        } else {
-            res.redirect('/');
+            return res.status(500).send('Erro ao fazer logout');
         }
+        res.clearCookie('isLoggedIn');
+        res.redirect('/');
     });
 });
 
+// Rota para renderizar a página de índice
+app.get('/', (req, res) => {
+    res.render('index', { errorMessage: '' });
+});
 
-app.listen(8080, () => {
-    console.log(`Servidor está rodando em http://localhost:${8080}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor está rodando em http://localhost:${PORT}`);
 });
